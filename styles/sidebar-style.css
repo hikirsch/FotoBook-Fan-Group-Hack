@@ -1,0 +1,14 @@
+#fotobook-photos-widget .thumbnail {
+  -x-background-x-position: center;
+  -x-background-y-position: center;
+  background-attachment: scroll;
+  background-color: #242424;
+  background-repeat: no-repeat;
+  float: left;
+  margin: 5px;
+  overflow: hidden;
+}
+
+#fotobook-photos-widget img {
+  border: 0;
+}
