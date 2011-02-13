@@ -5,7 +5,7 @@ Plugin URI: http://www.aaronharp.com/dev/wp-fotobook/,
 Description: Fotobook allows you to import Facebook photo galleries directly into WordPress.  <strong>Requires PHP 5.</strong>
 Author: Aaron Harp
 Author URI: http://www.aaronharp.com/
-Version: 3.2.1_PandG
+Version: 3.2.2_PandG-ASK 
 */
 
 /*
@@ -31,14 +31,14 @@ global $table_prefix, $wp_version;
 define('FB_ALBUM_TABLE', $table_prefix.'fb_albums');
 define('FB_PHOTO_TABLE', $table_prefix.'fb_photos');
 define('FB_POSTS_TABLE', $table_prefix.'posts');
-define('FB_PLUGIN_PATH', ABSPATH.'/wp-content/plugins/fotobook/');
-define('FB_PLUGIN_URL', get_option('siteurl').'/wp-content/plugins/fotobook/');
+define('FB_PLUGIN_PATH', WP_PLUGIN_DIR.'/fotobook/');
+define('FB_PLUGIN_URL', plugins_url().'/fotobook/');
 define('FB_STYLE_URL', FB_PLUGIN_URL.'styles/'.get_option('fb_style').'/');
 define('FB_STYLE_PATH', FB_PLUGIN_PATH.'styles/'.get_option('fb_style').'/');
 define('FB_MANAGE_URL', (get_bloginfo('version') >= 2.7 ? 'media-new.php' : 'edit.php') .'?page=fotobook/manage-fotobook.php');
 define('FB_OPTIONS_URL', 'options-general.php?page=fotobook/options-fotobook.php');
 define('FB_WEBSITE', 'http://www.aaronharp.com/dev/wp-fotobook/');
-define('FB_VERSION', 3.21);
+define('FB_VERSION', 3.22);
 define('FB_DONATE', 'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=aaron%40freshwebs%2enet&item_name=Fotobook%20Donation&no_shipping=0&no_note=1&tax=0&currency_code=USD&lc=US&bn=PP%2dDonationsBF&charset=UTF%2d8');
 
 // facebook configuration variables
@@ -58,6 +58,9 @@ $fb_message = null;
 function fb_admin_scripts() {
 	wp_enqueue_style('fotobook-css', FB_PLUGIN_URL.'styles/admin-styles.css');
 	wp_enqueue_script('fotobook-js', FB_PLUGIN_URL.'js/admin.js', array('jquery', 'jquery-ui-sortable'), FB_VERSION);
+	wp_enqueue_script('colorbox', FB_PLUGIN_URL.'styles/colorbox/js/colorbox.js');
+	wp_enqueue_script('colorbox', FB_PLUGIN_URL.'styles/colorbox/js/colorbox.js');
+	wp_enqueue_style('colorbox', FB_PLUGIN_URL.'styles/colorbox/colorbox.css');
 }
 add_action('load-fotobook/manage-fotobook.php', 'fb_admin_scripts');
 add_action('load-fotobook/options-fotobook.php', 'fb_admin_scripts');
@@ -113,8 +116,9 @@ class FacebookAPI {
 	function select_session($uid) {
 		foreach ($this->sessions as $session) {
 			if ($session['uid'] == $uid) {
+				$this->facebook->set_user($uid);
+				$this->facebook->use_session_secret($session['secret']);
 				$this->facebook->session_key = $session['session_key'];
-				$this->facebook->secret = $session['secret'];
 				return true;
 			}
 		}
@@ -254,8 +258,8 @@ class FacebookAPI {
 			$uid = $session['uid'];
 			$this->select_session($uid);
 
-
-			//START CHANGES HERE
+			try{
+				//START CHANGES HERE
 			if(is_numeric($session['gid'])){
 				//groups don't have albums, just photos. Here we get all the photos and fake an album
 				$gid=$session['gid'];
@@ -271,7 +275,8 @@ class FacebookAPI {
 					$group_info=$this->facebook->fql_query("SELECT gid,name FROM group WHERE gid=$gid");
 	
 					//fake an album
-					$fb_albums[] = array(						'aid'=>$gid,  //this may cause some problems
+					$fb_albums[] = array(
+						'aid'=>$gid,  //this may cause some problems
 						'cover_pid'=>$group_photos[0]['pid'],
 					        'owner'=>$gid, //this is fine, I think
 						'name'=>$group_info[0]['name'].' Group Photos',
@@ -286,50 +291,55 @@ class FacebookAPI {
 			}
 			//END CHANGES HERE (the code in the else below is original)
 			else{
-			// get all albums
-			$result = $this->facebook->photos_getAlbums($uid, null);
-			if(!is_array($result)) // the current user has no photos so move on
-				continue;
-			$fb_albums = array_merge($fb_albums, $result);
-			$this->update_progress();
+				// get all albums
+				$result = $this->facebook->photos_getAlbums($uid, null);
+				if(!is_array($result)) // the current user has no photos so move on
+					continue;
+				$fb_albums = array_merge($fb_albums, $result);
+				$this->update_progress();
+			]
 
-			// get all photos - queries are limited to 5,000 items per query so we need to split them up
-			// technically this could still error out if the user 100+ photos per album, in that case
-			// the following number would need to change to 25 or lower
-			$albums_per_query = 50; $i = 0; $album_offset = 0;
-			while ($album_offset < count($result)) {
-				$photos = $this->facebook->fql_query("SELECT pid, aid, owner, src, src_big, src_small, link, caption, created FROM photo WHERE aid IN (SELECT aid FROM album WHERE owner = '$uid' LIMIT $albums_per_query OFFSET $album_offset)");
-				$fb_photos = array_merge($fb_photos, (array) $photos);
-				$album_offset = ($albums_per_query * ++$i);
-			}
-			$this->update_progress();
+				// get all photos - queries are limited to 5,000 items per query so we need to split them up
+				// technically this could still error out if the user 100+ photos per album, in that case
+				// the following number would need to change to 25 or lower
+				$albums_per_query = 50; $i = 0; $album_offset = 0;
+				while ($album_offset < count($result)) {
+					$photos = $this->facebook->fql_query("SELECT pid, aid, owner, src, src_big, src_small, link, caption, created FROM photo WHERE aid IN (SELECT aid FROM album WHERE owner = '$uid' LIMIT $albums_per_query OFFSET $album_offset)");
+					$fb_photos = array_merge($fb_photos, (array) $photos);
+					$album_offset = ($albums_per_query * ++$i);
+				}
+				$this->update_progress();
 
-			// get photos of user
-			$fb_user_photos = $this->facebook->photos_get($uid, null, null);
-			if($fb_user_photos) {
-				foreach($fb_user_photos as $k=>$v) $fb_user_photos[$k]['aid'] = $uid;
-				$fb_photos = array_merge($fb_photos, (array)$fb_user_photos);
-				$fb_albums[] = array(
-					'aid'=>$uid,
-					'cover_pid'=>$fb_user_photos[0]['pid'],
-					'owner'=>$uid,
-					'name'=>'Photos of '.(count($this->sessions) > 1 ? $session['name'] : 'Me'),
-					'created'=>time(),
-					'modified'=>time(),
-					'description'=>'',
-					'location'=>'',
-					'link'=>"http://www.facebook.com/photo_search.php?id=$uid",
-					'size'=>count($fb_user_photos)
-				);
-			}
-
-			if(!$fb_albums || $this->facebook->error_code) {
-				$this->msg	 = 'Fotobook encountered an error while retrieving your photos. [Error #'.$this->facebook->error_code.']';
+				// get photos of user
+				$fb_user_photos = $this->facebook->photos_get($uid, null, null);
+				if($fb_user_photos) {
+					foreach($fb_user_photos as $k=>$v) $fb_user_photos[$k]['aid'] = $uid;
+					$fb_photos = array_merge($fb_photos, (array)$fb_user_photos);
+					$fb_albums[] = array(
+						'aid'=>$uid,
+						'cover_pid'=>$fb_user_photos[0]['pid'],
+						'owner'=>$uid,
+						'name'=>'Photos of '.(count($this->sessions) > 1 ? $session['name'] : 'Me'),
+						'created'=>time(),
+						'modified'=>time(),
+						'description'=>'',
+						'location'=>'',
+						'link'=>"http://www.facebook.com/photo_search.php?id=$uid",
+						'size'=>count($fb_user_photos)
+					);
+				}
+			} 
+			catch (Exception $e) {
+				if ($e->getCode() == 102) {
+					unset($this->sessions[$key]);
+					update_option('fb_facebook_session', $this->sessions);
+					$this->msg = "The account for {$session['name']} is no longer active.  Please add the account again from the settings panel.";
+				}
+				else {
+					$this->msg = "There was an error while retrieving your photos: {$e->getMessage()} [Error #{$e->getCode()}]";
+				}
 				return false;
 			}
-
-			} // END INSERTED CONDITIONAL
-
 		}
 
 		// put all the albums in an array with the aid as the key

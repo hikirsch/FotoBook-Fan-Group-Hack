@@ -2,9 +2,9 @@
 Contributors: aaron_guitar
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=aaron%40freshwebs%2enet&item_name=Fotobook%20Donation&no_shipping=0&no_note=1&tax=0&currency_code=USD&lc=US&bn=PP%2dDonationsBF&charset=UTF%2d8
 Tags: facebook, photos, images, gallery, fotobook, import, widget, media
-Requires at least: 2.5
-Tested up to: 3.0
-Stable tag: 3.2.1
+Requires at least: 2.6
+Tested up to: 3.0.1
+Stable tag: 3.2.2
 
 Fotobook is a WordPress plugin that will link to your Facebook account(s) and import all of your photo albums for use in your WordPress installation. It uses the Facebook API so importing your photos is a breeze.
 
@@ -77,6 +77,12 @@ The [Lightbox plugin](http://wordpress.org/extend/plugins/lightbox-2-wordpress-p
 Check out my [photo gallery](http://www.aaronharp.com/photo-gallery/).
 
 == Changelog ==
+
+= 3.2.2 =
+
+* Fixed issue where new users weren't able to import albums due to changes in Facebook's API.  NOTE: If the import process hasn't been working for you, you will need to remove your account and go through the authorization process again.
+* There is now a third step in the "Add Account" process for getting extended permissions.
+* Better error handling when the photo import fails
 
 = 3.2.1 =
 

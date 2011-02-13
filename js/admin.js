@@ -6,10 +6,17 @@ var fotobook = {
 	interval: undefined,
 	init: function() {
 		jQuery('#grant-permissions').click(function() {
+			window.open(this.href, 'fotobookAuth', 'width=500,height=300');
 			jQuery(this).css('opacity', 0.5);
 			window.onbeforeunload = function(e) {
 				return ('If this page is refreshed or changed between granting and applying permissions the activation process will not work.');
 			};
+			return false;
+		});
+		jQuery('#request-permissions').click(function() {
+			window.open(this.href, 'fotobookAuth', 'width=500,height=300');
+			jQuery(this).css('opacity', 0.5);
+			return false;
 		});
 		jQuery('#apply-permissions').submit(function() {
 			jQuery(this).find('input[type="submit"]').css('opacity', 0.5);

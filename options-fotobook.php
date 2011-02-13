@@ -4,6 +4,7 @@
 Fotobook Options Panel
 */
 
+
 // get facebook authorization token
 $facebook = new FacebookAPI;
 
@@ -157,10 +158,11 @@ $fb_hide_pages      = get_option('fb_hide_pages');
 					<td valign="top" width="170">
 						<h3>Add an Account</h3>
 						<?php if($facebook->token): ?>
-						<p><a id="grant-permissions" href="http://www.facebook.com/login.php?api_key=<?php echo FB_API_KEY ?>&amp;v=1.0&amp;auth_token=<?php echo $facebook->token ?>&amp;popup=0&amp;skipcookie=1" class="button-secondary" target="_blank">Grant Permissions &gt;</a></p>
 						<form method="post" id="apply-permissions" action="<?php echo FB_OPTIONS_URL ?>">
 							<input type="hidden" name="activate-facebook" value="<?php echo $facebook->token ?>" />
-							<input type="submit" class="button-secondary" value="Apply Permissions &gt;" />
+							<p><a id="grant-permissions" href="http://www.facebook.com/login.php?api_key=<?php echo FB_API_KEY ?>&amp;v=1.0&amp;auth_token=<?php echo $facebook->token ?>&amp;popup=0&amp;skipcookie=1&amp;ext_perm=user_photos,offline_access,user_photo_video_tags" class="button-secondary" target="_blank">Step 1: Authenticate &gt;</a></p>
+							<p><a id="request-permissions" href="http://www.facebook.com/connect/prompt_permission.php?api_key=<?php echo FB_API_KEY ?>&next=<?php echo urlencode('http://www.facebook.com/desktopapp.php?api_key='.FB_API_KEY.'&popup=1') ?>&cancel=http://www.facebook.com/connect/login_failure.html&display=popup&ext_perm=offline_access,user_photos,user_photo_video_tags" class="button-secondary" target="_blank">Step 2: Get Permissions &gt;</a></p>
+							<p><input type="submit" class="button-secondary" value="Step 3: Apply Permissions &gt;" /></p>
 						</form>
 						<?php else: ?>
 						Unable to get authorization token.
@@ -174,16 +176,14 @@ $fb_hide_pages      = get_option('fb_hide_pages');
 						?>
 						<form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="get">
 							<p><img src="http://www.facebook.com/favicon.ico" align="absmiddle">
-			<?php //START CHANGES HERE
-				if(is_numeric($facebook->sessions[$key]['gid'])){
-					$link="http://www.facebook.com/group.php?gid=".$facebook->sessions[$key]['gid'];
-				}else{
-					$link="http://www.facebook.com/profile.php?id=".$facebook->sessions[$key]['uid'];
-				}
-			?>
-			<a href="<?php echo $link; ?>" target="_blank"><?php echo $facebook->sessions[$key]['name']; ?></a>
-       			<?php //END CHANGES HERE ?>
-
+							<?php //START CHANGES HERE
+								if(is_numeric($facebook->sessions[$key]['gid'])){
+									$link="http://www.facebook.com/group.php?gid=".$facebook->sessions[$key]['gid'];
+								}else{
+									$link="http://www.facebook.com/profile.php?id=".$facebook->sessions[$key]['uid'];
+								}
+							?>
+							<a href="<?php echo $link; ?>" target="_blank"><?php echo $facebook->sessions[$key]['name']; ?></a>
 							<input type="hidden" name="deactivate-facebook" value="<?php echo $key ?>">
 							<input type="hidden" name="page" value="<?php echo $_GET['page'] ?>">
 							<input type="submit" class="button-secondary" value="Remove" onclick="return confirm('Removing an account also removes all of the photos associated with the account.  Would you like to continue?')">
