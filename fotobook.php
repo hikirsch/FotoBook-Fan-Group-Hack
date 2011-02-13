@@ -297,7 +297,7 @@ class FacebookAPI {
 					continue;
 				$fb_albums = array_merge($fb_albums, $result);
 				$this->update_progress();
-			]
+			}
 
 				// get all photos - queries are limited to 5,000 items per query so we need to split them up
 				// technically this could still error out if the user 100+ photos per album, in that case
