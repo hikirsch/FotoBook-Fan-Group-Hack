@@ -8,12 +8,16 @@ Stable tag: 3.2.2
 
 Fotobook is a WordPress plugin that will link to your Facebook account(s) and import all of your photo albums for use in your WordPress installation. It uses the Facebook API so importing your photos is a breeze.
 
+NOTE: This is a hacked version of this plugin and has not yet been excepted into the main source. This is a branch to support the Fan Page and Group feature. I also am not responsible for creating the ability, I simple merged the changes from 3.2.1 into the latest 3.2.2.
+
+Original 3.2.1 Hack for Groups and Fan Pages: http://tintinnabuleur.bcbc.co.uk/2010/02/15/more-fotobook-changes/
+
 == Description ==
 
 Fotobook is a WordPress plugin that will link to your Facebook account(s) and import all of your photo albums for use in your WordPress installation. It uses the Facebook API so importing your photos is a breeze.  Requires PHP 5.
    
 **Features:**
-
+* Groups and Fan Pages
 * Interfaces with Facebook's API
 * Displays photo albums on a WordPress page
 * Import photos from mulitple Facebook accounts
