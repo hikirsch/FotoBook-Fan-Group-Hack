@@ -29,11 +29,13 @@
 }
 
 #fotobook-photo {
+  text-align: center;
   padding-top: 10px;
   padding-bottom: 10px;
 }
 
 #fotobook-photo img {
+  text-align: center;
   border: 0;
 }
 

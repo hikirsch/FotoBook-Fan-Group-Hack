@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: Fotobook
-Plugin URI: http://www.aaronharp.com/dev/wp-fotobook/
+Plugin Name: Fotobook with Pages and Groups
+Plugin URI: http://www.aaronharp.com/dev/wp-fotobook/,
 Description: Fotobook allows you to import Facebook photo galleries directly into WordPress.  <strong>Requires PHP 5.</strong>
 Author: Aaron Harp
 Author URI: http://www.aaronharp.com/
-Version: 3.2.1
+Version: 3.2.1_PandG
 */
 
 /*
@@ -254,6 +254,38 @@ class FacebookAPI {
 			$uid = $session['uid'];
 			$this->select_session($uid);
 
+
+			//START CHANGES HERE
+			if(is_numeric($session['gid'])){
+				//groups don't have albums, just photos. Here we get all the photos and fake an album
+				$gid=$session['gid'];
+				$group_photos=$this->facebook->fql_query("SELECT pid, aid, owner, src, src_big, src_small, link, caption, created FROM photo WHERE pid IN (SELECT pid FROM photo_tag WHERE subject=$gid)");
+				//$this->facebook->call_method('Photos.get', array('subj_id' => $gid)); -this is supposed to get all a groups photos but doesnt
+				if($group_photos) {
+					foreach($group_photos as $key=>$value){
+						$value['aid']   = $gid;  //this may cause some problems
+						$value['owner'] = $gid;  //this is fine, I think
+						array_push($fb_photos,$value);
+					}
+					//get group info
+					$group_info=$this->facebook->fql_query("SELECT gid,name FROM group WHERE gid=$gid");
+	
+					//fake an album
+					$fb_albums[] = array(						'aid'=>$gid,  //this may cause some problems
+						'cover_pid'=>$group_photos[0]['pid'],
+					        'owner'=>$gid, //this is fine, I think
+						'name'=>$group_info[0]['name'].' Group Photos',
+						'created'=>time(),
+						'modified'=>time(),
+						'description'=>'',
+						'location'=>'',
+						'link'=>"http://www.facebook.com/group.php?v=photos&ref=ts&gid=".$gid,
+						'size'=>count($group_photos)
+				       	 );
+				}
+			}
+			//END CHANGES HERE (the code in the else below is original)
+			else{
 			// get all albums
 			$result = $this->facebook->photos_getAlbums($uid, null);
 			if(!is_array($result)) // the current user has no photos so move on
@@ -295,6 +327,8 @@ class FacebookAPI {
 				$this->msg	 = 'Fotobook encountered an error while retrieving your photos. [Error #'.$this->facebook->error_code.']';
 				return false;
 			}
+
+			} // END INSERTED CONDITIONAL
 
 		}
 

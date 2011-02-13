@@ -23,6 +23,55 @@ $this_page = $_SERVER['PHP_SELF'].'?page='.$_GET['page'];
 $styles = fb_get_styles();
 
 // update options if form is submitted
+
+
+//START CHANGES HERE
+  //Adding a Fan Page
+  if ( is_numeric($_POST['fb_fan_page_id']) ){
+	$fan_page_id=$_POST['fb_fan_page_id'];
+	// We're going to add the fan pages by replicating
+       // one of the sessions that fotobook already uses
+	// but replacing some of the details
+	$session_option_val=get_option('fb_facebook_session');
+
+	//copy the first session
+	$head_session=$session_option_val[0];
+	//change some of the values
+	$head_session['uid'] =$fan_page_id;
+	$head_session['fpid']=$fan_page_id;
+	$head_session['name']="Fan Page ".$fan_page_id;
+	unset($head_session['gid']);	
+
+	//add this altered session to the end of the list
+	array_push($session_option_val,$head_session); 
+
+	//save
+	update_option('fb_facebook_session',$session_option_val);
+  }
+
+  //Adding a Groups Photos
+  if ( is_numeric($_POST['fb_group_id']) ){
+	$group_id=$_POST['fb_group_id'];
+	// We're going to add the group by replicating
+       // one of the sessions that fotobook already uses
+	// but replacing some of the details
+	$session_option_val=get_option('fb_facebook_session');
+
+	//copy the first session
+	$head_session=$session_option_val[0];
+	//change some of the values
+	$head_session['gid'] =$group_id;
+	$head_session['name']="Group ".$group_id;
+
+	//add this altered session to the end of the list
+	array_push($session_option_val,$head_session); 
+
+	//save
+	update_option('fb_facebook_session',$session_option_val);
+  }
+//END CHANGES HERE
+
+
 if (isset($_POST['submit'])) {
 	fb_options_update_albums_page($_POST['fb_albums_page']);	
 	update_option('fb_number_rows', $_POST['fb_number_rows']);
@@ -124,7 +173,17 @@ $fb_hide_pages      = get_option('fb_hide_pages');
 						foreach($facebook->sessions as $key=>$value): 
 						?>
 						<form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="get">
-							<p><img src="http://www.facebook.com/favicon.ico" align="absmiddle"> <a href="http://www.facebook.com/profile.php?id=<?php echo $facebook->sessions[$key]['uid'] ?>" target="_blank"><?php echo $facebook->sessions[$key]['name']; ?></a>
+							<p><img src="http://www.facebook.com/favicon.ico" align="absmiddle">
+			<?php //START CHANGES HERE
+				if(is_numeric($facebook->sessions[$key]['gid'])){
+					$link="http://www.facebook.com/group.php?gid=".$facebook->sessions[$key]['gid'];
+				}else{
+					$link="http://www.facebook.com/profile.php?id=".$facebook->sessions[$key]['uid'];
+				}
+			?>
+			<a href="<?php echo $link; ?>" target="_blank"><?php echo $facebook->sessions[$key]['name']; ?></a>
+       			<?php //END CHANGES HERE ?>
+
 							<input type="hidden" name="deactivate-facebook" value="<?php echo $key ?>">
 							<input type="hidden" name="page" value="<?php echo $_GET['page'] ?>">
 							<input type="submit" class="button-secondary" value="Remove" onclick="return confirm('Removing an account also removes all of the photos associated with the account.  Would you like to continue?')">
@@ -140,7 +199,32 @@ $fb_hide_pages      = get_option('fb_hide_pages');
 				</tr>
 			</table>
 	
-		<form method="post" action="<?php echo $this_page ?>&amp;updated=true">		
+		<form method="post" action="<?php echo $this_page ?>&amp;updated=true">	
+
+<?php //START CHANGES HERE ?>
+	<table class="form-table">
+		<h3><?php _e('Add A Fan Page') ?></h3>
+	  <tr>
+	    <th scope="row"><?php _e('Fan Page ID') ?></th>
+           <td>
+	    <input name="fb_fan_page_id" type="text" value="" size="20" />
+	    <small><?php _e('A page id of a Fan Page whose albums you wish to be able to show. You must first add an account above. Fan page albums will appear in the User Accounts section above. ') ?></small>
+	    </td>
+	  </tr>
+	</table>
+
+	<table class="form-table">
+		<h3><?php _e('Add A Facebook Group') ?></h3>
+	  <tr>
+	    <th scope="row"><?php _e('Group ID') ?></th>
+           <td>
+	    <input name="fb_group_id" type="text" value="" size="20" />
+	    <small><?php _e('A group id of a group whose photos you wish to be able to show. You must first add an account above. Fan page albums will appear in the User Accounts section above. ') ?></small>
+	    </td>
+	  </tr>
+	</table>
+<?php //END CHANGES HERE ?>
+	
 			<h3><?php _e('General') ?></h3>
 			<table class="form-table">
 				<tr>
